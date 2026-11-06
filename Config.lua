@@ -95,7 +95,7 @@ end
 
 local function newTab(label, idx, x)
     local b = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
-    b:SetSize(64, 22); b:SetPoint("TOPLEFT", x, -48)
+    b:SetSize(60, 22); b:SetPoint("TOPLEFT", x, -48)
     b:SetText(label)
     b:SetScript("OnClick", function() selectTab(idx) end)
     tabButtons[idx] = b
@@ -334,6 +334,42 @@ local function GetBagsConsumables()
                         end
                         local isCamping = isCampfire or isCampItem
 
+                        local isLockKey = false
+                        local isLockBomb = false
+                        if name then
+                            local lowerName = string.lower(name)
+                            if string.find(lowerName, "skeleton key") or 
+                               string.find(lowerName, "dietrich") or 
+                               string.find(lowerName, "passe-partout") or 
+                               string.find(lowerName, "llave maestra") or 
+                               string.find(lowerName, "llave esqueleto") or 
+                               string.find(lowerName, "chave-mestra") or 
+                               string.find(lowerName, "chave esqueleto") or 
+                               string.find(lowerName, "chiave universale") or 
+                               string.find(lowerName, "lockpick") or 
+                               string.find(lowerName, "thieves' tools") or 
+                               string.find(lowerName, "thieves tools") then
+                                isLockKey = true
+                            end
+
+                            if string.find(lowerName, "seaforium") or 
+                               string.find(lowerName, "meerforium") or 
+                               string.find(lowerName, "séforium") or 
+                               string.find(lowerName, "seforium") or 
+                               string.find(lowerName, "seforio") or 
+                               string.find(lowerName, "seaforio") or 
+                               string.find(lowerName, "seafório") or 
+                               string.find(lowerName, "lock bomb") or 
+                               string.find(lowerName, "lock buster") or 
+                               string.find(lowerName, "lockbuster") then
+                                isLockBomb = true
+                            end
+                        end
+                        local isKey = isLockKey or isLockBomb
+                        if isLockBomb then
+                            isBomb = false
+                        end
+
                         -- Check if listed on any bar
                         local isListed = false
                         for _, def in ipairs(NS.barDefs) do
@@ -343,7 +379,7 @@ local function GetBagsConsumables()
                             end
                         end
                         
-                        if isFoodAndDrink or isPotion or isElixir or isFlask or isBandage or isHealthstone or isBomb or isStone or isCamping or isListed then
+                        if isFoodAndDrink or isPotion or isElixir or isFlask or isBandage or isHealthstone or isBomb or isStone or isCamping or isKey or isListed then
                             table.insert(items, {
                                 id = id,
                                 name = name,
@@ -572,7 +608,7 @@ end
 -- ---------------------------------------------------------------------------
 local function build()
     win = CreateFrame("Frame", "MyEdiblesConfigWindow", UIParent, "BackdropTemplate")
-    win:SetSize(650, 560)
+    win:SetSize(680, 560)
     win:SetFrameStrata("FULLSCREEN_DIALOG")
     win:SetToplevel(true)
     if NS.db and NS.db.configPos then
@@ -632,14 +668,14 @@ local function build()
     for _, def in ipairs(NS.barDefs) do
         tabIdx = tabIdx + 1
         local tabFrame = newTab(def.label:gsub("^My", ""), tabIdx, tabX)
-        tabX = tabX + 68
+        tabX = tabX + 64
         BuildBarSettingsTab(def, tabFrame)
     end
 
     -- ===== Whitelist Tab =====
     tabIdx = tabIdx + 1
     local wl = newTab("WList", tabIdx, tabX)
-    tabX = tabX + 68
+    tabX = tabX + 64
     header(wl, "Item Whitelist (Always show these items)", 8, -6, 500)
 
     -- Bar Selector Toggles
@@ -650,7 +686,7 @@ local function build()
     local wlBtnX = wlBarText
     for _, def in ipairs(NS.barDefs) do
         local btn = CreateFrame("Button", nil, wl, "UIPanelButtonTemplate")
-        btn:SetSize(76, 20)
+        btn:SetSize(70, 20)
         if wlBtnX == wlBarText then
             btn:SetPoint("LEFT", wlBarText, "RIGHT", 8, 0)
         else
@@ -736,7 +772,7 @@ local function build()
     local blBtnX = blBarText
     for _, def in ipairs(NS.barDefs) do
         local btn = CreateFrame("Button", nil, bl, "UIPanelButtonTemplate")
-        btn:SetSize(76, 20)
+        btn:SetSize(70, 20)
         if blBtnX == blBarText then
             btn:SetPoint("LEFT", blBarText, "RIGHT", 8, 0)
         else
@@ -814,7 +850,7 @@ local function build()
 
     local bagsList = CreateFrame("Frame", nil, bgTab)
     bagsList:SetPoint("TOPLEFT", 8, -26)
-    bagsList:SetSize(610, ROW_H * 8 + 20)
+    bagsList:SetSize(660, ROW_H * 8 + 20)
     bagsList:EnableMouseWheel(true)
     bagsList:SetScript("OnMouseWheel", function(_, delta)
         local maxOff = math.max(0, bagsCount - 8)
@@ -825,14 +861,14 @@ local function build()
     bagsRows = {}
     for i = 1, 8 do
         local row = CreateFrame("Frame", nil, bagsList)
-        row:SetSize(610, ROW_H + 4)
+        row:SetSize(660, ROW_H + 4)
         row:SetPoint("TOPLEFT", 0, -(i-1)*(ROW_H + 4))
 
         row.text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        row.text:SetPoint("LEFT", 4, 0); row.text:SetWidth(70); row.text:SetJustifyH("LEFT")
+        row.text:SetPoint("LEFT", 4, 0); row.text:SetWidth(60); row.text:SetJustifyH("LEFT")
 
         row.status = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        row.status:SetPoint("LEFT", row.text, "RIGHT", 2, 0); row.status:SetWidth(40); row.status:SetJustifyH("LEFT")
+        row.status:SetPoint("LEFT", row.text, "RIGHT", 2, 0); row.status:SetWidth(36); row.status:SetJustifyH("LEFT")
 
         -- Create WL/BL toggle buttons for each bar
         row.barWlBtns = {}
@@ -842,7 +878,7 @@ local function build()
             local short = def.key:sub(1, 3):upper()
             
             local wlBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
-            wlBtn:SetSize(38, 18); wlBtn:SetPoint("LEFT", prevBtn, "RIGHT", 3, 0)
+            wlBtn:SetSize(36, 18); wlBtn:SetPoint("LEFT", prevBtn, "RIGHT", 3, 0)
             wlBtn:SetText("+" .. short:sub(1,3))
             wlBtn:SetScript("OnClick", function()
                 if row.itemID then
@@ -858,7 +894,7 @@ local function build()
             end)
 
             local blBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
-            blBtn:SetSize(38, 18); blBtn:SetPoint("LEFT", wlBtn, "RIGHT", 1, 0)
+            blBtn:SetSize(36, 18); blBtn:SetPoint("LEFT", wlBtn, "RIGHT", 1, 0)
             blBtn:SetText("x" .. short:sub(1,3))
             blBtn:SetScript("OnClick", function()
                 if row.itemID then

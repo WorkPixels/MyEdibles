@@ -185,6 +185,34 @@ NS.barDefs = {
             { key = "Objects", label = "Camp Objects Only" },
         },
     },
+    {
+        key = "keys",
+        label = "MyKeys",
+        anchorName = "MyKeysAnchor",
+        buttonPrefix = "MyKeysButton",
+        defaults = {
+            enabled = true,
+            maxItems = 5,
+            buttonSize = 32,
+            buttonSpacing = 4,
+            orientation = "Horizontal",
+            locked = false,
+            scale = 1.0,
+            whitelist = {},
+            blacklist = {},
+            point = "BOTTOM",
+            relativePoint = "BOTTOM",
+            xOfs = 100,
+            yOfs = 150,
+            filterType = "All",
+            hideWhenEmpty = true,
+        },
+        filterOpts = {
+            { key = "All",     label = "Show All Keys & Charges" },
+            { key = "Keys",    label = "Skeleton Keys Only" },
+            { key = "Charges", label = "Seaforium Charges Only" },
+        },
+    },
 }
 
 -- Runtime state per bar: anchors, buttons, activeItems
@@ -429,6 +457,42 @@ local function ScanBags()
                         end
                         local isCamping = isCampfire or isCampItem
 
+                        local isLockKey = false
+                        local isLockBomb = false
+                        if name then
+                            local lowerName = string.lower(name)
+                            if string.find(lowerName, "skeleton key") or 
+                               string.find(lowerName, "dietrich") or 
+                               string.find(lowerName, "passe-partout") or 
+                               string.find(lowerName, "llave maestra") or 
+                               string.find(lowerName, "llave esqueleto") or 
+                               string.find(lowerName, "chave-mestra") or 
+                               string.find(lowerName, "chave esqueleto") or 
+                               string.find(lowerName, "chiave universale") or 
+                               string.find(lowerName, "lockpick") or 
+                               string.find(lowerName, "thieves' tools") or 
+                               string.find(lowerName, "thieves tools") then
+                                isLockKey = true
+                            end
+
+                            if string.find(lowerName, "seaforium") or 
+                               string.find(lowerName, "meerforium") or 
+                               string.find(lowerName, "séforium") or 
+                               string.find(lowerName, "seforium") or 
+                               string.find(lowerName, "seforio") or 
+                               string.find(lowerName, "seaforio") or 
+                               string.find(lowerName, "seafório") or 
+                               string.find(lowerName, "lock bomb") or 
+                               string.find(lowerName, "lock buster") or 
+                               string.find(lowerName, "lockbuster") then
+                                isLockBomb = true
+                            end
+                        end
+                        local isKey = isLockKey or isLockBomb
+                        if isLockBomb then
+                            isBomb = false
+                        end
+
                         itemDetails[id] = {
                             id = id,
                             name = name,
@@ -446,6 +510,9 @@ local function ScanBags()
                             isCamping = isCamping,
                             isCampfire = isCampfire,
                             isCampItem = isCampItem,
+                            isKey = isKey,
+                            isLockKey = isLockKey,
+                            isLockBomb = isLockBomb,
                             icon = texture or info.icon,
                         }
                     else
@@ -520,6 +587,8 @@ local function MatchesBar(barKey, detail)
         return detail.isStone
     elseif barKey == "camping" then
         return detail.isCamping
+    elseif barKey == "keys" then
+        return detail.isKey
     end
     return false
 end
@@ -537,6 +606,9 @@ local function PassesFilter(barKey, filterType, detail)
     elseif barKey == "camping" then
         if filterType == "Fires" and not detail.isCampfire then return false end
         if filterType == "Objects" and not detail.isCampItem then return false end
+    elseif barKey == "keys" then
+        if filterType == "Keys" and not detail.isLockKey then return false end
+        if filterType == "Charges" and not detail.isLockBomb then return false end
     end
     -- bandaids and stones only have "All" filter, always pass
     return true
@@ -977,6 +1049,8 @@ local function CreateBarUI()
     NS.stoneButtons = NS.bars.stones.buttons
     NS.campingButtons = NS.bars.camping and NS.bars.camping.buttons
     NS.campingAnchor = NS.bars.camping and NS.bars.camping.anchor
+    NS.keyButtons = NS.bars.keys and NS.bars.keys.buttons
+    NS.keyAnchor = NS.bars.keys and NS.bars.keys.anchor
 end
 
 -- ---------------------------------------------------------------------------

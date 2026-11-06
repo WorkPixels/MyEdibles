@@ -15,6 +15,7 @@ Supports **World of Warcraft: Forever**, **The Burning Crusade Classic (Annivers
   - **MyBombs**: Explosives, grenades, dynamite, and sapper charges.
   - **MyStones**: Sharpening stones, weightstones, and weapon temporary enhancements.
   - **MyCamping**: Campfire kits (Basic, Journeyman, Expert) and profession camp items (Tiers 1–3) in *World of Warcraft: Forever*.
+  - **MyKeys**: Blacksmithing skeleton keys (Silver, Golden, Truesilver, Arcanite, Cobalt, Titanium) and Engineering lock bombs (Small, Large, Powerful, Elemental Seaforium Charges).
 - **Full Customization per Bar:**
   - Independent orientation (Horizontal or Vertical).
   - Independent scale, button size, spacing, and maximum item count.

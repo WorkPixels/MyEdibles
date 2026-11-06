@@ -1,0 +1,12 @@
+## Interface: 16001, 11508, 11507, 20504, 20505, 110000, 110100, 110200
+## Title: MyEdibles
+## Notes: Draggable consumable bars for food, drink, potions, elixirs, bandages, bombs, stones, and camping items with filtering and whitelist/blacklist controls.
+## Author: KD
+## Version: 1.0.0
+## SavedVariables: MyEdiblesDB
+## IconTexture: Interface\Icons\INV_Misc_Food_09
+
+Compat.lua
+Config.lua
+MyEdibles.lua
+

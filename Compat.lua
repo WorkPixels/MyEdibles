@@ -41,6 +41,22 @@ function C.ItemInfo(bag, slot)
     }
 end
 
+function C.SlotItemID(bag, slot)
+    if CC and CC.GetContainerItemID then return CC.GetContainerItemID(bag, slot) end
+    if _G.GetContainerItemID then return _G.GetContainerItemID(bag, slot) end
+    local info = C.ItemInfo(bag, slot)
+    return info and info.itemID
+end
+
+function C.SlotItemCount(bag, slot)
+    if CC and CC.GetContainerItemInfo then
+        local t = CC.GetContainerItemInfo(bag, slot)
+        return (t and t.stackCount) or 1
+    end
+    local _, count = _G.GetContainerItemInfo(bag, slot)
+    return count or 1
+end
+
 function C.ItemLink(bag, slot)
     if CC and CC.GetContainerItemLink then return CC.GetContainerItemLink(bag, slot) end
     return _G.GetContainerItemLink(bag, slot)

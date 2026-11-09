@@ -289,246 +289,6 @@ local function SavePosition(barKey)
 end
 
 -- ---------------------------------------------------------------------------
--- Bag Scanning
--- ---------------------------------------------------------------------------
-local function ScanBags()
-    local counts = {}
-    local itemDetails = {}
-    local neededItemInfos = false
-
-    for _, bag in ipairs(C.BACKPACK_BAGS) do
-        local slots = C.NumSlots(bag)
-        for slot = 1, slots do
-            local info = C.ItemInfo(bag, slot)
-            if info and info.itemID then
-                local id = info.itemID
-                counts[id] = (counts[id] or 0) + info.count
-
-                if not itemDetails[id] then
-                    local name, link, quality, iLevel, reqLevel, class, subclass, maxStack, slotName, texture, vendorPrice, classID, subclassID = GetItemInfo(id)
-                    if name then
-                        local isFoodAndDrink = false
-                        local isPotion = false
-                        local isElixir = false
-                        local isFlask = false
-                        local isBandage = false
-                        
-                        if classID and subclassID then
-                            isFoodAndDrink = (classID == 0 and subclassID == 5)
-                            isPotion = (classID == 0 and subclassID == 1)
-                            isElixir = (classID == 0 and subclassID == 2)
-                            isFlask = (classID == 0 and subclassID == 3)
-                            isBandage = (classID == 0 and subclassID == 7)
-                        else
-                            isFoodAndDrink = (class == "Consumable" and subclass == "Food & Drink")
-                            isPotion = (class == "Consumable" and subclass == "Potion")
-                            isElixir = (class == "Consumable" and subclass == "Elixir")
-                            isFlask = (class == "Consumable" and subclass == "Flask")
-                            isBandage = (class == "Consumable" and subclass == "Bandage")
-                        end
-
-                        local isHealthstone = false
-                        local lowerName = string.lower(name)
-                        if string.find(lowerName, "healthstone") or 
-                           string.find(lowerName, "gesundheitsstein") or 
-                           string.find(lowerName, "pierre de soin") or 
-                           string.find(lowerName, "piedra de salud") or 
-                           string.find(lowerName, "pietra della salute") or
-                           string.find(lowerName, "pedra de saude") or
-                           string.find(lowerName, "pedra de saúde") then
-                            isHealthstone = true
-                        end
-
-                        -- Name-based fallback checks (robust for localization & API quirks)
-                        if not isPotion and (string.find(lowerName, "potion") or string.find(lowerName, "trank") or string.find(lowerName, "poción") or string.find(lowerName, "pozione") or string.find(lowerName, "potion")) then
-                            isPotion = true
-                        end
-                        if not isElixir and (string.find(lowerName, "elixir") or string.find(lowerName, "elixier") or string.find(lowerName, "élixir") or string.find(lowerName, "elíxir")) then
-                            isElixir = true
-                        end
-                        if not isFlask and (string.find(lowerName, "flask") or string.find(lowerName, "fläschchen") or string.find(lowerName, "flacon") or string.find(lowerName, "frasco")) then
-                            isFlask = true
-                        end
-                        if not isBandage and (string.find(lowerName, "bandage") or string.find(lowerName, "verband") or string.find(lowerName, "venda") or string.find(lowerName, "benda")) then
-                            isBandage = true
-                        end
-
-                        local isBomb = false
-                        if name then
-                            local lowerName = string.lower(name)
-                            if string.find(lowerName, "bomb") or 
-                               string.find(lowerName, "bombe") or
-                               string.find(lowerName, "bomba") or
-                               string.find(lowerName, "grenade") or 
-                               string.find(lowerName, "granate") or 
-                               string.find(lowerName, "granada") or
-                               string.find(lowerName, "granata") or
-                               string.find(lowerName, "dynamite") or 
-                               string.find(lowerName, "dynamit") or 
-                               string.find(lowerName, "dinamita") or
-                               string.find(lowerName, "dinamite") or
-                               string.find(lowerName, "sapper charge") or 
-                               string.find(lowerName, "sapeur") or 
-                               string.find(lowerName, "zapador") or
-                               string.find(lowerName, "sapador") or
-                               string.find(lowerName, "explosive sheep") or
-                               string.find(lowerName, "explosivschaf") or
-                               string.find(lowerName, "mouton explosif") or
-                               string.find(lowerName, "oveja explosiva") then
-                                isBomb = true
-                            end
-                        end
-
-                        local isStone = false
-                        if name then
-                            local lowerName = string.lower(name)
-                            if string.find(lowerName, "sharpening stone") or 
-                               string.find(lowerName, "wetzstein") or 
-                               string.find(lowerName, "schleifstein") or 
-                               string.find(lowerName, "pierre à aiguiser") or 
-                               string.find(lowerName, "pierre de lest") or 
-                               string.find(lowerName, "piedra de afilar") or 
-                               string.find(lowerName, "pietra per affilare") or 
-                               string.find(lowerName, "pedra de afiar") or 
-                               string.find(lowerName, "weight stone") or 
-                               string.find(lowerName, "weightstone") or 
-                               string.find(lowerName, "gewichtstein") or 
-                               string.find(lowerName, "piedra de peso") or 
-                               string.find(lowerName, "pietra da peso") or 
-                               string.find(lowerName, "pedra de peso") then
-                                isStone = true
-                            end
-                        end
-
-                        local isCampfire = false
-                        local isCampItem = false
-                        if name then
-                            local lowerName = string.lower(name)
-                            if string.find(lowerName, "campfire") or 
-                               string.find(lowerName, "camp fire") or 
-                               string.find(lowerName, "feuerstelle") or 
-                               string.find(lowerName, "feu de camp") or 
-                               string.find(lowerName, "hoguera") then
-                                isCampfire = true
-                            end
-
-                            if string.find(lowerName, "camp chair") or 
-                               string.find(lowerName, "camp tent") or 
-                               string.find(lowerName, "camping") or 
-                               string.find(lowerName, "campsite") or 
-                               string.find(lowerName, "sharpening wheel") or 
-                               string.find(lowerName, "mana well") or 
-                               string.find(lowerName, "enchanted lute") or 
-                               string.find(lowerName, "enchanter's crystal") or 
-                               string.find(lowerName, "leyline conduit") or 
-                               string.find(lowerName, "field first aid kit") or 
-                               string.find(lowerName, "triage station") or 
-                               string.find(lowerName, "emergency cot") or 
-                               string.find(lowerName, "trauma center") or 
-                               string.find(lowerName, "fish bowl") or 
-                               string.find(lowerName, "tackle box bench") or 
-                               string.find(lowerName, "fisherman's wharf") or 
-                               string.find(lowerName, "incense candle") or 
-                               string.find(lowerName, "sprout box") or 
-                               string.find(lowerName, "seed hybridizer") or 
-                               string.find(lowerName, "arborist's conservatory") or 
-                               string.find(lowerName, "tannin basin") or 
-                               string.find(lowerName, "curing rack") or 
-                               string.find(lowerName, "master tanner") or 
-                               string.find(lowerName, "mining lodestone") or 
-                               string.find(lowerName, "lodestone") or 
-                               string.find(lowerName, "smelter's hearth") or 
-                               string.find(lowerName, "core drill") or 
-                               string.find(lowerName, "skinning post") or 
-                               string.find(lowerName, "drying frame") or 
-                               string.find(lowerName, "trophies of the hunt") or 
-                               string.find(lowerName, "faction banner") or 
-                               string.find(lowerName, "camp banner") or 
-                               string.find(lowerName, "scarlet banner") or 
-                               string.find(lowerName, "reagent bot") or 
-                               string.find(lowerName, "tinker's workbench") or 
-                               string.find(lowerName, "repair station") or 
-                               string.find(lowerName, "demolition platform") or 
-                               string.find(lowerName, "fermenter") or 
-                               string.find(lowerName, "campfire anvil") or 
-                               string.find(lowerName, "master forge") then
-                                isCampItem = true
-                            end
-                        end
-                        local isCamping = isCampfire or isCampItem
-
-                        local isLockKey = false
-                        local isLockBomb = false
-                        if name then
-                            local lowerName = string.lower(name)
-                            if string.find(lowerName, "skeleton key") or 
-                               string.find(lowerName, "dietrich") or 
-                               string.find(lowerName, "passe-partout") or 
-                               string.find(lowerName, "llave maestra") or 
-                               string.find(lowerName, "llave esqueleto") or 
-                               string.find(lowerName, "chave-mestra") or 
-                               string.find(lowerName, "chave esqueleto") or 
-                               string.find(lowerName, "chiave universale") or 
-                               string.find(lowerName, "lockpick") or 
-                               string.find(lowerName, "thieves' tools") or 
-                               string.find(lowerName, "thieves tools") then
-                                isLockKey = true
-                            end
-
-                            if string.find(lowerName, "seaforium") or 
-                               string.find(lowerName, "meerforium") or 
-                               string.find(lowerName, "séforium") or 
-                               string.find(lowerName, "seforium") or 
-                               string.find(lowerName, "seforio") or 
-                               string.find(lowerName, "seaforio") or 
-                               string.find(lowerName, "seafório") or 
-                               string.find(lowerName, "lock bomb") or 
-                               string.find(lowerName, "lock buster") or 
-                               string.find(lowerName, "lockbuster") then
-                                isLockBomb = true
-                            end
-                        end
-                        local isKey = isLockKey or isLockBomb
-                        if isLockBomb then
-                            isBomb = false
-                        end
-
-                        itemDetails[id] = {
-                            id = id,
-                            name = name,
-                            link = info.link or link,
-                            quality = quality,
-                            minLevel = reqLevel or 0,
-                            isFoodAndDrink = isFoodAndDrink,
-                            isPotion = isPotion,
-                            isElixir = isElixir,
-                            isFlask = isFlask,
-                            isBandage = isBandage,
-                            isHealthstone = isHealthstone,
-                            isBomb = isBomb,
-                            isStone = isStone,
-                            isCamping = isCamping,
-                            isCampfire = isCampfire,
-                            isCampItem = isCampItem,
-                            isKey = isKey,
-                            isLockKey = isLockKey,
-                            isLockBomb = isLockBomb,
-                            icon = texture or info.icon,
-                        }
-                    else
-                        neededItemInfos = true
-                        if C_Item and C_Item.RequestLoadItemDataByID then
-                            C_Item.RequestLoadItemDataByID(id)
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return counts, itemDetails, neededItemInfos
-end
-
--- ---------------------------------------------------------------------------
 -- Tooltip Scanner for Food Subtype (Health vs Mana)
 -- ---------------------------------------------------------------------------
 local scanner
@@ -570,6 +330,266 @@ local function GetEdibleType(itemLink)
     end
     return "Health"
 end
+NS.GetEdibleType = GetEdibleType
+
+-- ---------------------------------------------------------------------------
+-- Static Item Cache & Detail Resolver (Cached by itemID to eliminate GC churn)
+-- ---------------------------------------------------------------------------
+NS.itemCache = {}
+NS.pendingItems = {}
+
+local function GetItemDetail(id)
+    if NS.itemCache[id] then
+        return NS.itemCache[id]
+    end
+
+    local name, link, quality, iLevel, reqLevel, class, subclass, maxStack, slotName, texture, vendorPrice, classID, subclassID = GetItemInfo(id)
+    if not name then return nil end
+
+    local isFoodAndDrink = false
+    local isPotion = false
+    local isElixir = false
+    local isFlask = false
+    local isBandage = false
+
+    if classID and subclassID then
+        isFoodAndDrink = (classID == 0 and subclassID == 5)
+        isPotion = (classID == 0 and subclassID == 1)
+        isElixir = (classID == 0 and subclassID == 2)
+        isFlask = (classID == 0 and subclassID == 3)
+        isBandage = (classID == 0 and subclassID == 7)
+    else
+        isFoodAndDrink = (class == "Consumable" and subclass == "Food & Drink")
+        isPotion = (class == "Consumable" and subclass == "Potion")
+        isElixir = (class == "Consumable" and subclass == "Elixir")
+        isFlask = (class == "Consumable" and subclass == "Flask")
+        isBandage = (class == "Consumable" and subclass == "Bandage")
+    end
+
+    local lowerName = string.lower(name)
+    local isHealthstone = false
+    if string.find(lowerName, "healthstone") or 
+       string.find(lowerName, "gesundheitsstein") or 
+       string.find(lowerName, "pierre de soin") or 
+       string.find(lowerName, "piedra de salud") or 
+       string.find(lowerName, "pietra della salute") or
+       string.find(lowerName, "pedra de saude") or
+       string.find(lowerName, "pedra de saúde") then
+        isHealthstone = true
+    end
+
+    -- Name-based fallback checks (robust for localization & API quirks)
+    if not isPotion and (string.find(lowerName, "potion") or string.find(lowerName, "trank") or string.find(lowerName, "poción") or string.find(lowerName, "pozione")) then
+        isPotion = true
+    end
+    if not isElixir and (string.find(lowerName, "elixir") or string.find(lowerName, "elixier") or string.find(lowerName, "élixir") or string.find(lowerName, "elíxir")) then
+        isElixir = true
+    end
+    if not isFlask and (string.find(lowerName, "flask") or string.find(lowerName, "fläschchen") or string.find(lowerName, "flacon") or string.find(lowerName, "frasco")) then
+        isFlask = true
+    end
+    if not isBandage and (string.find(lowerName, "bandage") or string.find(lowerName, "verband") or string.find(lowerName, "venda") or string.find(lowerName, "benda")) then
+        isBandage = true
+    end
+
+    local isBomb = false
+    if string.find(lowerName, "bomb") or 
+       string.find(lowerName, "bombe") or
+       string.find(lowerName, "bomba") or
+       string.find(lowerName, "grenade") or 
+       string.find(lowerName, "granate") or 
+       string.find(lowerName, "granada") or
+       string.find(lowerName, "granata") or
+       string.find(lowerName, "dynamite") or 
+       string.find(lowerName, "dynamit") or 
+       string.find(lowerName, "dinamita") or
+       string.find(lowerName, "dinamite") or
+       string.find(lowerName, "sapper charge") or 
+       string.find(lowerName, "sapeur") or 
+       string.find(lowerName, "zapador") or
+       string.find(lowerName, "sapador") or
+       string.find(lowerName, "explosive sheep") or
+       string.find(lowerName, "explosivschaf") or
+       string.find(lowerName, "mouton explosif") or
+       string.find(lowerName, "oveja explosiva") then
+        isBomb = true
+    end
+
+    local isStone = false
+    if string.find(lowerName, "sharpening stone") or 
+       string.find(lowerName, "wetzstein") or 
+       string.find(lowerName, "schleifstein") or 
+       string.find(lowerName, "pierre à aiguiser") or 
+       string.find(lowerName, "pierre de lest") or 
+       string.find(lowerName, "piedra de afilar") or 
+       string.find(lowerName, "pietra per affilare") or 
+       string.find(lowerName, "pedra de afiar") or 
+       string.find(lowerName, "weight stone") or 
+       string.find(lowerName, "weightstone") or 
+       string.find(lowerName, "gewichtstein") or 
+       string.find(lowerName, "piedra de peso") or 
+       string.find(lowerName, "pietra da peso") or 
+       string.find(lowerName, "pedra de peso") then
+        isStone = true
+    end
+
+    local isCampfire = false
+    local isCampItem = false
+    if string.find(lowerName, "campfire") or 
+       string.find(lowerName, "camp fire") or 
+       string.find(lowerName, "feuerstelle") or 
+       string.find(lowerName, "feu de camp") or 
+       string.find(lowerName, "hoguera") then
+        isCampfire = true
+    end
+
+    if string.find(lowerName, "camp chair") or 
+       string.find(lowerName, "camp tent") or 
+       string.find(lowerName, "camping") or 
+       string.find(lowerName, "campsite") or 
+       string.find(lowerName, "sharpening wheel") or 
+       string.find(lowerName, "mana well") or 
+       string.find(lowerName, "enchanted lute") or 
+       string.find(lowerName, "enchanter's crystal") or 
+       string.find(lowerName, "leyline conduit") or 
+       string.find(lowerName, "field first aid kit") or 
+       string.find(lowerName, "triage station") or 
+       string.find(lowerName, "emergency cot") or 
+       string.find(lowerName, "trauma center") or 
+       string.find(lowerName, "fish bowl") or 
+       string.find(lowerName, "tackle box bench") or 
+       string.find(lowerName, "fisherman's wharf") or 
+       string.find(lowerName, "incense candle") or 
+       string.find(lowerName, "sprout box") or 
+       string.find(lowerName, "seed hybridizer") or 
+       string.find(lowerName, "arborist's conservatory") or 
+       string.find(lowerName, "tannin basin") or 
+       string.find(lowerName, "curing rack") or 
+       string.find(lowerName, "master tanner") or 
+       string.find(lowerName, "mining lodestone") or 
+       string.find(lowerName, "lodestone") or 
+       string.find(lowerName, "smelter's hearth") or 
+       string.find(lowerName, "core drill") or 
+       string.find(lowerName, "skinning post") or 
+       string.find(lowerName, "drying frame") or 
+       string.find(lowerName, "trophies of the hunt") or 
+       string.find(lowerName, "faction banner") or 
+       string.find(lowerName, "camp banner") or 
+       string.find(lowerName, "scarlet banner") or 
+       string.find(lowerName, "reagent bot") or 
+       string.find(lowerName, "tinker's workbench") or 
+       string.find(lowerName, "repair station") or 
+       string.find(lowerName, "demolition platform") or 
+       string.find(lowerName, "fermenter") or 
+       string.find(lowerName, "campfire anvil") or 
+       string.find(lowerName, "master forge") then
+        isCampItem = true
+    end
+    local isCamping = isCampfire or isCampItem
+
+    local isLockKey = false
+    local isLockBomb = false
+    if string.find(lowerName, "skeleton key") or 
+       string.find(lowerName, "dietrich") or 
+       string.find(lowerName, "passe-partout") or 
+       string.find(lowerName, "llave maestra") or 
+       string.find(lowerName, "llave esqueleto") or 
+       string.find(lowerName, "chave-mestra") or 
+       string.find(lowerName, "chave esqueleto") or 
+       string.find(lowerName, "chiave universale") or 
+       string.find(lowerName, "lockpick") or 
+       string.find(lowerName, "thieves' tools") or 
+       string.find(lowerName, "thieves tools") then
+        isLockKey = true
+    end
+
+    if string.find(lowerName, "seaforium") or 
+       string.find(lowerName, "meerforium") or 
+       string.find(lowerName, "séforium") or 
+       string.find(lowerName, "seforium") or 
+       string.find(lowerName, "seforio") or 
+       string.find(lowerName, "seaforio") or 
+       string.find(lowerName, "seafório") or 
+       string.find(lowerName, "lock bomb") or 
+       string.find(lowerName, "lock buster") or 
+       string.find(lowerName, "lockbuster") then
+        isLockBomb = true
+    end
+    local isKey = isLockKey or isLockBomb
+    if isLockBomb then
+        isBomb = false
+    end
+
+    local foodType = nil
+    if isFoodAndDrink and link then
+        foodType = GetEdibleType(link)
+    end
+
+    local detail = {
+        id = id,
+        name = name,
+        link = link,
+        quality = quality,
+        minLevel = reqLevel or 0,
+        isFoodAndDrink = isFoodAndDrink,
+        isPotion = isPotion,
+        isElixir = isElixir,
+        isFlask = isFlask,
+        isBandage = isBandage,
+        isHealthstone = isHealthstone,
+        isBomb = isBomb,
+        isStone = isStone,
+        isCamping = isCamping,
+        isCampfire = isCampfire,
+        isCampItem = isCampItem,
+        isKey = isKey,
+        isLockKey = isLockKey,
+        isLockBomb = isLockBomb,
+        foodType = foodType,
+        icon = texture or (C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(id)),
+    }
+
+    NS.itemCache[id] = detail
+    return detail
+end
+NS.GetItemDetail = GetItemDetail
+
+-- ---------------------------------------------------------------------------
+-- Bag Scanning (Allocates 0 new tables on subsequent calls)
+-- ---------------------------------------------------------------------------
+local scanCounts = {}
+local scanDetails = {}
+
+local function ScanBags()
+    table.wipe(scanCounts)
+    table.wipe(scanDetails)
+    local neededItemInfos = false
+
+    for _, bag in ipairs(C.BACKPACK_BAGS) do
+        local slots = C.NumSlots(bag)
+        for slot = 1, slots do
+            local itemID = C.SlotItemID(bag, slot)
+            if itemID then
+                local count = C.SlotItemCount(bag, slot)
+                scanCounts[itemID] = (scanCounts[itemID] or 0) + count
+
+                if not scanDetails[itemID] then
+                    local detail = GetItemDetail(itemID)
+                    if detail then
+                        scanDetails[itemID] = detail
+                    else
+                        neededItemInfos = true
+                        NS.pendingItems[itemID] = true
+                        if C_Item and C_Item.RequestLoadItemDataByID then
+                            C_Item.RequestLoadItemDataByID(itemID)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return scanCounts, scanDetails, neededItemInfos
+end
 
 -- ---------------------------------------------------------------------------
 -- Item matching helpers per bar type
@@ -592,12 +612,13 @@ local function MatchesBar(barKey, detail)
     end
     return false
 end
+NS.MatchesBar = MatchesBar
 
 local function PassesFilter(barKey, filterType, detail)
     if filterType == "All" then return true end
     
     if barKey == "edibles" then
-        local foodType = GetEdibleType(detail.link)
+        local foodType = detail.foodType or (detail.link and GetEdibleType(detail.link))
         if filterType == "Health" and foodType == "Mana" then return false end
         if filterType == "Mana" and foodType == "Health" then return false end
     elseif barKey == "potions" then
@@ -618,13 +639,14 @@ end
 -- Bar Layout and Updates
 -- ---------------------------------------------------------------------------
 function NS.UpdateBarVisuals()
-    local counts = {}
+    table.wipe(scanCounts)
     for _, bag in ipairs(C.BACKPACK_BAGS) do
         local slots = C.NumSlots(bag)
         for slot = 1, slots do
-            local info = C.ItemInfo(bag, slot)
-            if info and info.itemID then
-                counts[info.itemID] = (counts[info.itemID] or 0) + info.count
+            local itemID = C.SlotItemID(bag, slot)
+            if itemID then
+                local count = C.SlotItemCount(bag, slot)
+                scanCounts[itemID] = (scanCounts[itemID] or 0) + count
             end
         end
     end
@@ -633,7 +655,7 @@ function NS.UpdateBarVisuals()
         for i = 1, #buttons do
             local btn = buttons[i]
             if btn:IsShown() and btn.itemID then
-                local count = counts[btn.itemID] or 0
+                local count = scanCounts[btn.itemID] or 0
                 if count == 0 then
                     btn.icon:SetDesaturated(true)
                     btn.icon:SetVertexColor(0.4, 0.4, 0.4)
@@ -712,7 +734,7 @@ local function CreateActionButton(btnName, parent)
     return btn
 end
 
-function NS.UpdateSingleBar(barKey)
+function NS.UpdateSingleBar(barKey, counts, itemDetails)
     if InCombatLockdown() then
         NS.updateNeeded = true
         return
@@ -744,8 +766,10 @@ function NS.UpdateSingleBar(barKey)
     end
     anchor:SetScale(db.scale or 1.0)
 
-    -- Scan Bags
-    local counts, itemDetails, neededItemInfos = ScanBags()
+    -- Scan Bags if not provided
+    if not counts or not itemDetails then
+        counts, itemDetails = ScanBags()
+    end
     
     -- Filter and collect matching items
     local list = {}
@@ -774,6 +798,7 @@ function NS.UpdateSingleBar(barKey)
                         minLevel = detail.minLevel,
                         count = count,
                         icon = detail.icon,
+                        foodType = detail.foodType,
                     })
                 end
             end
@@ -808,7 +833,7 @@ function NS.UpdateSingleBar(barKey)
 
     if barKey == "edibles" and db.filterType == "All" then
         for _, item in ipairs(list) do
-            local foodType = GetEdibleType(item.link)
+            local foodType = item.foodType or (item.link and GetEdibleType(item.link))
             if foodType == "Health" then
                 table.insert(foodList, item)
             elseif foodType == "Mana" then
@@ -975,10 +1000,45 @@ function NS.UpdateSingleBar(barKey)
 end
 
 function NS.UpdateBar()
+    if InCombatLockdown() then
+        NS.updateNeeded = true
+        return
+    end
+
+    local counts, itemDetails = ScanBags()
+
     for _, def in ipairs(NS.barDefs) do
-        NS.UpdateSingleBar(def.key)
+        NS.UpdateSingleBar(def.key, counts, itemDetails)
     end
 end
+
+-- ---------------------------------------------------------------------------
+-- Debounced Update Engine (Coalesces bursts of events into a single update)
+-- ---------------------------------------------------------------------------
+local updateFrame = CreateFrame("Frame", "MyEdiblesDebounceFrame")
+updateFrame:Hide()
+local updatePending = false
+
+function NS.RequestUpdate()
+    if InCombatLockdown() then
+        NS.updateNeeded = true
+        return
+    end
+    updatePending = true
+    updateFrame:Show()
+end
+
+updateFrame:SetScript("OnUpdate", function(self)
+    self:Hide()
+    if updatePending then
+        updatePending = false
+        if InCombatLockdown() then
+            NS.updateNeeded = true
+        else
+            NS.UpdateBar()
+        end
+    end
+end)
 
 -- ---------------------------------------------------------------------------
 -- Bar Creation
@@ -1077,16 +1137,18 @@ frame:SetScript("OnEvent", function(self, event, ...)
             NS.updateNeeded = true
             NS.UpdateBarVisuals()
         else
-            NS.UpdateBar()
+            NS.RequestUpdate()
         end
     elseif event == "PLAYER_REGEN_ENABLED" then
         if NS.updateNeeded then
             NS.updateNeeded = false
-            NS.UpdateBar()
+            NS.RequestUpdate()
         end
     elseif event == "GET_ITEM_INFO_RECEIVED" then
-        if not InCombatLockdown() then
-            NS.UpdateBar()
+        local itemID, success = ...
+        if itemID and NS.pendingItems[itemID] then
+            NS.pendingItems[itemID] = nil
+            NS.RequestUpdate()
         end
     end
 end)

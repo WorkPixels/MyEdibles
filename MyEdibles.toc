@@ -2,7 +2,7 @@
 ## Title: MyEdibles
 ## Notes: Draggable consumable bars for food, drink, potions, elixirs, bandages, bombs, stones, camping items, and keys/lock bombs with filtering and whitelist/blacklist controls.
 ## Author: KD
-## Version: 1.0.0
+## Version: 1.1.0
 ## SavedVariables: MyEdiblesDB
 ## IconTexture: Interface\Icons\INV_Misc_Food_09
 
